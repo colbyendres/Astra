@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Astra | Search</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+    <h1>Search</h1>
+    <form action="/results" method="post">
+        <label for="title">Paper Title or arXiv ID:</label>
+        <input type="text" name="title" id="title" required>
+        <br>
+        <label for="k">Number of Recommendations:</label>
+        <input type="number" name="k" id="k" value="5" min="1" max="20">
+        <br>
+        <button type="submit.large">Search</button>
+    </form>
+</body>
+</html>
+

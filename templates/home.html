@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Astra | Home</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+    <div style="text-align: center; margin-top: 20px">
+    <img alt="Astra Logo" src="static/assets/astra.png" style="width:400px; height: 400px;"/> 
+    </div>
+    <h1>Astra: An arXiv Recommender</h1>
+    <div class="button_div">
+    <button class="large" style="margin-bottom: 55px;"> <a href="/search" style="text-decoration: none;"> Get Started </a> </button>
+    </div>
+    <h2 class="about_header"> What is ASTRA? </h2>
+    <p class="about_text"> ASTRA (ArXiv Sourced Text Recommendation Agent), as the name suggests, is a paper recommendation service based on arXiv. We've collected {{ num_papers }}+ papers across various scientific disciplines
+    for recommendation. Simply provide a paper's title, arXiv ID, or a handful of keywords, and ASTRA will curate a list of relevant documents.    
+    </p>
+    <h2 class="about_header"> How does ASTRA work? </h2>
+    <p class="about_text">
+        The core component of ASTRA's recommendation engine is <a href="https://allenai.org/blog/specter2-adapting-scientific-document-embeddings-to-multiple-fields-and-task-formats-c95686c06567"> SPECTER-2 </a> ,
+        a large language model developed by AllenAI. SPECTER-2 was fine-tuned on a large corpus of scientific literature 
+        and has demonstrated results in retrieval, making it a perfect choice for ASTRA. With this approach,
+        recommendation is simply a k-nearest neighbors problem, made expedient via the use of 
+        <a href="https://github.com/facebookresearch/faiss/wiki">FAISS</a>.
+    </p>
+    <h2 class="about_header"> How can I learn more? </h2>
+    <p class="about_text">
+        The full source code for ASTRA, including the raw datasets, can be found <a href="https://github.com/colbyendres/Astra"> here</a>.
+    </p>
+</body>
+</html>
