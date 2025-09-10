@@ -1,30 +1,23 @@
-from flask import Flask, render_template, request
+from flask import Flask
 from RecommendationEngine import RecommendationEngine
+from config import Config
+from models import db
+from routes import bp as routes_bp
 
-app = Flask(__name__)
+def start_app():
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = Config.DB_URI
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = Config.SQLALCHEMY_TRACK_MODIFICATIONS
+    db.init_app(app)
 
-# Load engine once at startup
-engine = RecommendationEngine(
-    faiss_abstract_idx="data/index_abstract.faiss",
-    faiss_title_idx="data/index_title.faiss",
-    paper_metadata="data/papers.csv"
-)
+    with app.app_context():
+        app.recommender = RecommendationEngine(
+            faiss_abstract_idx=Config.EMBEDDINGS_INDEX,
+            db_session=db.session
+        )
 
-@app.route("/", methods=["GET"])
-def home():
-    paper_estimate = engine.get_total_papers()
-    return render_template("home.html", num_papers = paper_estimate)
+    app.register_blueprint(routes_bp)
+    return app
 
-@app.route("/search", methods=["GET", "POST"])
-def search():
-    return render_template("search.html")
 
-@app.route("/results", methods=["POST"])
-def results():
-    query_title = request.form["title"]
-    k = int(request.form["k"])
-    recommendations = engine.recommend_from_abstract(query_title, k)
-    return render_template("results.html", query=query_title, recommendations=recommendations)
-
-if __name__ == "__main__":
-    app.run()
+app = start_app()
