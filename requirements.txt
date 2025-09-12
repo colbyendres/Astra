@@ -7,3 +7,5 @@ pandas
 flask
 titlecase
 arxiv
+flask-sqlalchemy
+gunicorn
