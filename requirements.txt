@@ -6,3 +6,5 @@ gunicorn
 titlecase
 arxiv
 requests
+dotenv
+psycopg2

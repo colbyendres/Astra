@@ -1,8 +1,8 @@
 from arxiv import Search
 from models import Paper
-import regex as re
 import faiss
 import requests
+import re 
 
 class RecommendationEngine:
     """
