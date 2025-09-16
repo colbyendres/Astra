@@ -12,11 +12,12 @@ class RecommendationEngine:
     IS_ARXIV_ID = re.compile(r'[0-9]{4}\.[0-9]{5}')
 
     def __init__(self, faiss_abstract_idx: str, db_session):
-        self.initialized = False 
-        self.index_abstract = None #faiss.read_index(faiss_abstract_idx)
         self.session = db_session
+        self.index_path = faiss_abstract_idx
         self.model = None 
+        self.index_abstract = None 
         self.tokenizer = None 
+        self.initialized = False 
         
     def _initialize_model(self):
         from transformers import AutoTokenizer
@@ -28,6 +29,7 @@ class RecommendationEngine:
                                  load_as="specter2", set_active=True)
         self.model.eval()
         self.initialized = True
+        self.index_abstract = faiss.read_index(self.index_path)
 
     def _encode_query(self, query: str):
         # Lazily initialize model, tokenizers, etc.
