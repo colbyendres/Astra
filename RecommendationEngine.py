@@ -13,7 +13,7 @@ class RecommendationEngine:
 
     def __init__(self, faiss_abstract_idx: str, db_session):
         self.initialized = False 
-        self.index_abstract = faiss.read_index(faiss_abstract_idx)
+        self.index_abstract = None #faiss.read_index(faiss_abstract_idx)
         self.session = db_session
         self.model = None 
         self.tokenizer = None 
