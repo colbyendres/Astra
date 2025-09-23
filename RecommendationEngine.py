@@ -4,6 +4,7 @@ import re
 import faiss
 import numpy as np
 import requests
+
 from arxiv import Search
 
 from config import Config
@@ -62,6 +63,7 @@ class RecommendationEngine:
         emb = self._encode_query(query)
         scores, indices_list = self.paper_index.search(emb, k)
         indices = indices_list[0].tolist()
+
         results = []
         # NOTE: A single filter query doesn't necessarily preserve the order of papers by ID
         # Doing an individual query per retrieved ID is probably fine, since k is likely small
