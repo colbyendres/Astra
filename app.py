@@ -8,11 +8,12 @@ def start_app():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = Config.DB_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = Config.SQLALCHEMY_TRACK_MODIFICATIONS
+    app.secret_key = Config.SESSION_KEY
     db.init_app(app)
 
     with app.app_context():
         app.recommender = RecommendationEngine(
-            faiss_abstract_idx=Config.EMBEDDINGS_INDEX,
+            faiss_paper_path=Config.EMBEDDINGS_INDEX,
             db_session=db.session
         )
 

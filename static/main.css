@@ -340,6 +340,16 @@ input, select, textarea {
         border-bottom: 2px solid white;
     }
 
+    .error_flash {
+        background-color: rgba(255,200,200,0.15); /* Light red background */
+        border: 1px solid #ebccd1; /* Red border */
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+
+
 	blockquote {
 		border-left-color: rgba(255, 255, 255, 0.35);
 	}
