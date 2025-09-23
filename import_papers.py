@@ -6,7 +6,7 @@ from models import Paper  # adjust if your model lives elsewhere
 app = start_app()
 
 with app.app_context():
-    with open("data/papers.csv", newline="", encoding="utf-8") as csvfile:
+    with open("data/papers_trimmed.csv", newline="", encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
         for id_num, row in enumerate(reader):
             paper = Paper(

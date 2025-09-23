@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request , current_app
+from flask import Blueprint, render_template, request , current_app, flash, get_flashed_messages
+from requests import HTTPError
 
 bp = Blueprint('main', __name__)
 
@@ -15,5 +16,9 @@ def search():
 def results():
     query_title = request.form["title"]
     k = int(request.form["k"])
-    recommendations = current_app.recommender.recommend(query_title, k)
-    return render_template("results.html", query=query_title, recommendations=recommendations)
+    try:
+        recommendations = current_app.recommender.recommend(query_title, k)
+        return render_template("results.html", query=query_title, recommendations=recommendations)
+    except HTTPError as e:
+        flash(f'Unable to parse title (HTTP code {e.response.status_code})', 'error')
+        return render_template("search.html")
