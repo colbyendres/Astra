@@ -52,6 +52,9 @@ class RecommendationEngine:
         return emb / np.linalg.norm(emb, ord=2)
 
     def _init_faiss_index(self):
+        import os 
+        print(f'Index path {self.index_path} exists? {os.path.exists(self.index_path)}')
+
         self.paper_index = faiss.read_index(self.index_path)
         self.initialized = True 
         
