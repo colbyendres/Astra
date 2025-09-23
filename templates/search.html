@@ -5,6 +5,13 @@
     <link rel="stylesheet" href="static/main.css">
 </head>
 <body>
+    {% with message = get_flashed_messages(category_filter=["error"]) %}
+    {% if message %}
+        <div class="error_flash">
+            <strong style="color: #ff0000"> Error:   </strong> {{message[0]}}
+        </div>
+    {% endif %}
+    {% endwith %}
     <h1>Search</h1>
     <form action="/results" method="post">
         <label for="title">Paper Title or arXiv ID:</label>

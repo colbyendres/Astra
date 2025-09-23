@@ -1,8 +1,15 @@
-from torch import no_grad
-from arxiv import Search
-from models import Paper
-import faiss
+import json
 import re
+
+import faiss
+import numpy as np
+import requests
+
+from arxiv import Search
+
+from config import Config
+from models import Paper
+
 
 class RecommendationEngine:
     """
@@ -10,32 +17,13 @@ class RecommendationEngine:
     Relies on prebuilt FAISS indices for facilitating fast kNN
     """
     IS_ARXIV_ID = re.compile(r'[0-9]{4}\.[0-9]{5}')
-
-    def __init__(self, faiss_abstract_idx: str, db_session):
+    ENDPOINT = f'{Config.EMBEDDING_URL}/v1/embeddings'
+    
+    def __init__(self, faiss_paper_path: str, db_session):
+        self.paper_index = faiss.read_index(faiss_paper_path)
         self.session = db_session
-        self.index_path = faiss_abstract_idx
-        self.model = None 
-        self.index_abstract = None 
-        self.tokenizer = None 
-        self.initialized = False 
-        
-    def _initialize_model(self):
-        from transformers import AutoTokenizer
-        from adapters import AutoAdapterModel
-                
-        self.model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
-        self.tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
-        self.model.load_adapter("allenai/specter2", source="hf",
-                                 load_as="specter2", set_active=True)
-        self.model.eval()
-        self.initialized = True
-        self.index_abstract = faiss.read_index(self.index_path)
 
-    def _encode_query(self, query: str):
-        # Lazily initialize model, tokenizers, etc.
-        if not self.initialized:
-            self._initialize_model()
-            
+    def _encode_query(self, query: str):            
         # Determine if we're given an arXiv ID and convert it to title
         match = RecommendationEngine.IS_ARXIV_ID.search(query)
         if match:
@@ -44,23 +32,22 @@ class RecommendationEngine:
         else:
             query_title = query
 
-        # Get embedding of query for search
-        with no_grad():
-            inputs = self.tokenizer(
-                query_title,
-                padding=True,
-                truncation=True,
-                return_tensors="pt",
-                return_token_type_ids=False,
-                max_length=512
-            )
-
-            outputs = self.model(**inputs)
-            emb = outputs.last_hidden_state[:, 0,
-                                            :].numpy().astype("float32")
-        # Our embeddings in the FAISS index are unit vectors, so normalize here
-        faiss.normalize_L2(emb)
-        return emb
+        header = {
+            "Authorization": f"Bearer {Config.EMBEDDING_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": Config.EMBEDDING_MODEL_ID,
+            "input": query_title,
+            "input_type": "search_query",
+            "allow_ignored_params": True
+        }
+        rsp = requests.post(url=self.ENDPOINT, headers=header, data=json.dumps(payload), timeout=10)
+        rsp.raise_for_status()
+        emb = np.array(rsp.json()['data'][0]['embedding']).reshape(1,-1)
+        
+        # Our embeddings are already normalized in the FAISS index, so match that
+        return emb / np.linalg.norm(emb, ord=2)
 
     def recommend(self, query: str, k: int):
         """
@@ -74,9 +61,13 @@ class RecommendationEngine:
             list: Recommended papers
         """
         emb = self._encode_query(query)
-        scores, indices = self.index_abstract.search(emb, k)
+        scores, indices_list = self.paper_index.search(emb, k)
+        indices = indices_list[0].tolist()
+
         results = []
-        papers = self.session.query(Paper).filter(Paper.id.in_(indices[0].tolist())).all()
+        # NOTE: A single filter query doesn't necessarily preserve the order of papers by ID
+        # Doing an individual query per retrieved ID is probably fine, since k is likely small
+        papers = [self.session.query(Paper).filter(Paper.id == id).one() for id in indices]
         for idx, paper in enumerate(papers):
             results.append(paper.to_dict(score=100 * scores[0][idx]))
         return results
