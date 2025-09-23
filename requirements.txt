@@ -6,3 +6,4 @@ flask-sqlalchemy
 faiss-cpu
 titlecase
 arxiv
+gunicorn
