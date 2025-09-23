@@ -1,8 +1,15 @@
-from arxiv import Search
-from models import Paper
+import json
+import re
+
 import faiss
+import numpy as np
 import requests
-import re 
+
+from arxiv import Search
+
+from config import Config
+from models import Paper
+
 
 class RecommendationEngine:
     """
@@ -10,9 +17,10 @@ class RecommendationEngine:
     Relies on prebuilt FAISS indices for facilitating fast kNN
     """
     IS_ARXIV_ID = re.compile(r'[0-9]{4}\.[0-9]{5}')
-
-    def __init__(self, faiss_abstract_idx: str, db_session):
-        self.index_abstract = faiss.read_index(faiss_abstract_idx)
+    ENDPOINT = f'{Config.EMBEDDING_URL}/v1/embeddings'
+    
+    def __init__(self, faiss_paper_path: str, db_session):
+        self.paper_index = faiss.read_index(faiss_paper_path)
         self.session = db_session
 
     def _encode_query(self, query: str):            
@@ -24,14 +32,22 @@ class RecommendationEngine:
         else:
             query_title = query
 
-        # Query the model service for the embedding of our query title
-        rsp = requests.post('foo/encode', json={'query': query_title}, timeout=10)
+        header = {
+            "Authorization": f"Bearer {Config.EMBEDDING_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": Config.EMBEDDING_MODEL_ID,
+            "input": query_title,
+            "input_type": "search_query",
+            "allow_ignored_params": True
+        }
+        rsp = requests.post(url=self.ENDPOINT, headers=header, data=json.dumps(payload), timeout=10)
         rsp.raise_for_status()
-        emb = rsp.json()['embedding']
+        emb = np.array(rsp.json()['data'][0]['embedding']).reshape(1,-1)
         
-        # Our precomputed embedding are unit norm, so do the same to query
-        faiss.normalize_L2(emb)
-        return emb
+        # Our embeddings are already normalized in the FAISS index, so match that
+        return emb / np.linalg.norm(emb, ord=2)
 
     def recommend(self, query: str, k: int):
         """
@@ -45,10 +61,13 @@ class RecommendationEngine:
             list: Recommended papers
         """
         emb = self._encode_query(query)
-        scores, indices = self.index_abstract.search(emb, k)
-        # These are zero-based indices, not arXiv IDs
+        scores, indices_list = self.paper_index.search(emb, k)
+        indices = indices_list[0].tolist()
+
         results = []
-        papers = self.session.query(Paper).filter(Paper.id.in_(indices[0].tolist())).all()
+        # NOTE: A single filter query doesn't necessarily preserve the order of papers by ID
+        # Doing an individual query per retrieved ID is probably fine, since k is likely small
+        papers = [self.session.query(Paper).filter(Paper.id == id).one() for id in indices]
         for idx, paper in enumerate(papers):
             results.append(paper.to_dict(score=100 * scores[0][idx]))
         return results

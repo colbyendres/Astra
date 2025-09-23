@@ -1,10 +1,8 @@
-numpy
+numpy<2.0.0
+faiss-cpu
+psycopg2
 flask
 flask-sqlalchemy
 faiss-cpu
-gunicorn
 titlecase
 arxiv
-requests
-dotenv
-psycopg2
