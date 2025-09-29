@@ -13,7 +13,7 @@ class Paper(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.Text, nullable=False)
     authors = db.Column(db.Text)
-    url = db.Column(db.Text)
+    url = db.Column(db.Text, nullable=False)
     arxiv_id = db.Column(db.Text, nullable=False)
 
     def __repr__(self):
