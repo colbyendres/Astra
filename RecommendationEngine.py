@@ -20,8 +20,10 @@ class RecommendationEngine:
     ENDPOINT = f'{Config.EMBEDDING_URL}/v1/embeddings'
     
     def __init__(self, faiss_paper_path: str, db_session):
-        self.paper_index = faiss.read_index(faiss_paper_path)
         self.session = db_session
+        self.index_path = faiss_paper_path
+        self.paper_index = None
+        self.initialized = False
 
     def _encode_query(self, query: str):            
         # Determine if we're given an arXiv ID and convert it to title
@@ -49,6 +51,10 @@ class RecommendationEngine:
         # Our embeddings are already normalized in the FAISS index, so match that
         return emb / np.linalg.norm(emb, ord=2)
 
+    def _init_faiss_index(self):
+        self.paper_index = faiss.read_index(self.index_path)
+        self.initialized = True 
+        
     def recommend(self, query: str, k: int):
         """
         Recommend k papers using abstract embeddings
@@ -60,6 +66,11 @@ class RecommendationEngine:
         Returns:
             list: Recommended papers
         """
+        
+        # Lazily initialize FAISS index for faster boot
+        if not self.initialized:
+            self._init_faiss_index()
+            
         emb = self._encode_query(query)
         scores, indices_list = self.paper_index.search(emb, k)
         indices = indices_list[0].tolist()
