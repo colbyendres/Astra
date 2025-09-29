@@ -30,10 +30,6 @@ class RecommendationEngine:
                 Config.BUCKETEER_BUCKET_NAME, RecommendationEngine.S3_FAISS_PATH, RecommendationEngine.TMP_FAISS_PATH)
         self.paper_index = faiss.read_index(RecommendationEngine.TMP_FAISS_PATH)
         self.initialized = True
-
-    def _init_faiss_index(self):
-        self.paper_index = faiss.read_index(self.index_path)
-        self.initialized = True 
         
     def recommend(self, query: str, k: int):
         """
