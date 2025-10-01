@@ -1,13 +1,10 @@
-import os
-import faiss
-
 from sqlalchemy.exc import IntegrityError
 from models import Paper
 
 from EmbeddingService import EmbeddingService
 from ArxivService import ArxivService
-from config import Config
-
+from PaperStorage import restore_from_bucket, write_to_bucket
+from worker import get_job_queue
 
 class RecommendationEngine:
     """
@@ -15,22 +12,11 @@ class RecommendationEngine:
     Relies on prebuilt FAISS indices for facilitating fast kNN
     """
 
-    S3_FAISS_PATH = 'data/paper_index.faiss'
-    TMP_FAISS_PATH = '/tmp/paper_index.faiss'
-
-    def __init__(self, db_session, s3_client):
+    def __init__(self, db_session):
         self.session = db_session
-        self.s3_client = s3_client
+        self.queue = get_job_queue()
         self.paper_index = None
-        self.initialized = False
 
-    def _init_faiss_index(self):
-        if not os.path.exists(RecommendationEngine.TMP_FAISS_PATH):
-            self.s3_client.download_file(
-                Config.BUCKETEER_BUCKET_NAME, RecommendationEngine.S3_FAISS_PATH, RecommendationEngine.TMP_FAISS_PATH)
-        self.paper_index = faiss.read_index(RecommendationEngine.TMP_FAISS_PATH)
-        self.initialized = True
-        
     def recommend(self, query: str, k: int):
         """
         Recommend k papers using abstract embeddings
@@ -44,8 +30,8 @@ class RecommendationEngine:
         """
 
         # Lazily initialize FAISS index for faster boot
-        if not self.initialized:
-            self._init_faiss_index()
+        if not self.paper_index:
+            self.paper_index = restore_from_bucket()
 
         emb = EmbeddingService.embed_query(query)
         scores, indices_list = self.paper_index.search(emb, k)
@@ -83,12 +69,9 @@ class RecommendationEngine:
         Returns:
             None
         """
-        if not self.initialized:
-            self._init_faiss_index()
 
         paper_data = ArxivService.get_paper_by_title(title)
         db_id = self.get_total_papers(0) + 1
-
         try:
             new_paper = Paper(id=db_id, arxiv_id=paper_data['arxiv_id'], title=paper_data['title'],
                               authors=paper_data['authors'], url=paper_data['url'])
@@ -104,7 +87,10 @@ class RecommendationEngine:
 
         emb = EmbeddingService.embed_query(
             paper_data['title'] + ' ' + paper_data['abstract'], is_document=True)
+        if not self.paper_index:
+            self.paper_index = restore_from_bucket()
         self.paper_index.add(emb)
+        self.queue.enqueue(write_to_bucket, self.paper_index)
 
     def add_by_id(self, arxiv_id: str):
         """
@@ -115,8 +101,6 @@ class RecommendationEngine:
         Returns:
             None
         """
-        if not self.initialized:
-            self._init_faiss_index()
 
         paper_data = ArxivService.get_paper_by_id(arxiv_id)
         db_id = self.get_total_papers(0) + 1
@@ -136,4 +120,7 @@ class RecommendationEngine:
 
         emb = EmbeddingService.embed_query(
             paper_data['title'] + ' ' + paper_data['abstract'], is_document=True)
+        if not self.paper_index:
+            self.paper_index = restore_from_bucket()
         self.paper_index.add(emb)
+        self.queue.enqueue(write_to_bucket, self.paper_index)
