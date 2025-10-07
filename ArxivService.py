@@ -33,8 +33,13 @@ class ArxivService:
         """
         if not ArxivService.is_valid_arxiv_id(arxiv_id):
             raise TypeError('An invalid arXiv ID was supplied')
-        arxiv_res = Search(id_list=[arxiv_id], max_results=1)
-        data = next(arxiv_res.results())
+        try:
+            arxiv_res = Search(id_list=[arxiv_id], max_results=1)
+            data = next(arxiv_res.results())
+        except StopIteration:
+            # Generator is already at end, so search came up empty-handed
+            raise ValueError(f'Paper with arXiv ID {arxiv_id} does not exist')
+        
         authors = [str(a) for a in data.authors]
         return {
             'arxiv_id': arxiv_id,

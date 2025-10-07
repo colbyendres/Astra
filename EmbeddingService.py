@@ -4,6 +4,7 @@ import json
 
 from config import Config
 from ArxivService import ArxivService
+from pylatexenc.latex2text import LatexNodes2Text
 
 class EmbeddingService:
     """
@@ -14,6 +15,29 @@ class EmbeddingService:
         'Authorization': f'Bearer {Config.EMBEDDING_KEY}',
         'Content-Type': 'application/json'
     }
+    LATEX_CONV = LatexNodes2Text()
+    
+    @staticmethod
+    def _preprocess(text: str, is_document: bool):
+        """
+        Preprocess query to abide by Cohere's recommendations for embedding
+        
+        Args:
+            text (str): raw text to be embedded
+            is_document (bool): query corresponds to a document (default: False)
+            
+        Returns:
+            new_text (str): preprocessed text suitable for embedding    
+        """
+        # LaTeX commands can mess up the POST request to the Embed API
+        # Replace these with their natural language equivalent
+        if is_document:
+            text = EmbeddingService.LATEX_CONV.latex_to_text(text)
+        
+        # The Embed API has a 2048 character/512 token limit
+        # TODO: Add compliance to the latter requirement
+        # NOTE: Will require envelope math, since we don't want to pull in HF tokenizer
+        return text[:2048]
     
     @staticmethod
     def embed_query(query: str, is_document=False):
@@ -23,6 +47,9 @@ class EmbeddingService:
         Args:
             query (str): either an arxiv_id or raw text to be embedded
             is_document (bool): query corresponds to a document (default: False)
+            
+        Returns:
+            emb (np.array): L2-normalized embedding of query/document 
         """
         
         if ArxivService.is_valid_arxiv_id(query):
@@ -31,6 +58,7 @@ class EmbeddingService:
         else:
             input_data = query
             
+        input_data = EmbeddingService._preprocess(input_data, is_document)
         query_type = "search_document" if is_document else "search_query"
         payload = {
             "model": Config.EMBEDDING_MODEL_ID,

@@ -1,7 +1,6 @@
 import os 
 from dotenv import load_dotenv
 
-
 class Config:
     load_dotenv()
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -14,6 +13,9 @@ class Config:
     BUCKETEER_AWS_ACCESS_KEY_ID = os.environ.get('BUCKETEER_AWS_ACCESS_KEY_ID')
     BUCKETEER_AWS_REGION = os.environ.get('BUCKETEER_AWS_REGION')
     BUCKETEER_BUCKET_NAME = os.environ.get('BUCKETEER_BUCKET_NAME')
-    BUCKETEER_AWS_SECRET_ACCESS_KEY = os.environ.get('BUCKETEER_AWS_SECRET_ACCESS_KEY')   
+    BUCKETEER_AWS_SECRET_ACCESS_KEY = os.environ.get('BUCKETEER_AWS_SECRET_ACCESS_KEY')
+    REDIS_URL = os.environ.get('REDIS_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False 
+    LOCAL_FAISS_PATH = '/tmp/paper_index.faiss'
+    S3_FAISS_PATH = 'data/paper_index.faiss'
     
