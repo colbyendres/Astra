@@ -48,6 +48,6 @@ def publish():
             flask.flash(e, 'error')
         except FileNotFoundError:
             flask.flash('Building paper index, try again after a couple seconds', 'warning')
-            return flask.render_template("search.html")
+            return flask.render_template("publish.html")
     return flask.render_template('publish.html') 
                 
