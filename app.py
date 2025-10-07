@@ -13,10 +13,10 @@ def start_app():
     app.secret_key = Config.SESSION_KEY
     db.init_app(app)
     
+    job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
     index = PaperIndex(Config.LOCAL_FAISS_PATH)
     papers = Papers(db.session)
     rec = RecommendationEngine(index, papers)
-    job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
     with app.app_context():
         app.recommender = rec
         app.papers = papers
