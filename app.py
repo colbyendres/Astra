@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from RecommendationEngine import RecommendationEngine, PaperIndex, Papers
 from config import Config
@@ -10,10 +12,11 @@ def hello():
     print('Hello world')
     
 def start_app():
-    job = job_queue.enqueue(hello)
-    # job = job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
-    print(f"[enqueue] Job ID: {job.id}")
-    print(f"[enqueue] Job enqueued in {job_queue.name} with status {job.get_status()}")
+    # Pull in FAISS index from S3, if we're on the web dyno
+    if os.getenv('DYNO', '').startswith('web'):
+        job = job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
+        print(f"[enqueue] Job ID: {job.id}")
+        print(f"[enqueue] Job enqueued in {job_queue.name} with status {job.get_status()}")
     
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = Config.DB_URI
