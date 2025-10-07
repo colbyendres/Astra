@@ -8,3 +8,5 @@ titlecase
 arxiv
 gunicorn
 dotenv
+boto3
+rq

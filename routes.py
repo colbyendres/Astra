@@ -5,7 +5,7 @@ bp = flask.Blueprint('main', __name__)
 
 @bp.route("/", methods=["GET"])
 def home():
-    paper_estimate = flask.current_app.recommender.get_total_papers()
+    paper_estimate = flask.current_app.papers.get_total_papers()
     return flask.render_template("home.html", num_papers = paper_estimate)
 
 @bp.route("/search", methods=["GET"])
@@ -22,6 +22,9 @@ def results():
     except HTTPError as e:
         flask.flash(f'Unable to parse title (HTTP code {e.response.status_code})', 'error')
         return flask.render_template("search.html")
+    except FileNotFoundError:
+        flask.flash('Building paper index, try again after a couple seconds', 'warning')
+        return flask.render_template("search.html")
     
 @bp.route("/publish", methods=["GET", "POST"])
 def publish():
@@ -36,8 +39,8 @@ def publish():
             else:
                 title = flask.request.form['title']
                 abstract = flask.request.form['abstract']
-                if not title or not abstract:
-                    flask.flash('Must supply both title and abstract', 'error')
+                if not title:
+                    flask.flash('Paper title is required', 'error')
                 else:
                     flask.current_app.recommender.add_by_title(title, abstract)
             flask.flash('Paper successfully added')

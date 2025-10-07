@@ -5,10 +5,15 @@
     <link rel="stylesheet" href="static/main.css">
 </head>
 <body>
-    {% with message = get_flashed_messages(category_filter=["error"]) %}
+    {% with message = get_flashed_messages(with_categories=True) %}
     {% if message %}
-        <div class="error_flash">
-            <strong style="color: #ff0000"> Error:   </strong> {{message[0]}}
+        <div class="flash">
+            {% if message[0][0] == "error" %}
+            <strong style="color: #ff0000"> Error: </strong> 
+            {% elif message[0][0] == "warning" %}
+            <strong style="color: #f9e71f"> Warning: </strong>
+            {% endif %}
+            {{message[0][1]}}
         </div>
     {% endif %}
     {% endwith %}
