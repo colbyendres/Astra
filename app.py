@@ -5,9 +5,13 @@ from models import db
 from routes import bp as routes_bp
 from job_queue import job_queue
 from background_tasks import cache_faiss_index, s3_failure
+
+def hello():
+    print('Hello world')
     
 def start_app():
-    job = job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
+    job = job_queue.enqueue(hello)
+    # job = job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
     print(f"[enqueue] Job ID: {job.id}")
     print(f"[enqueue] Job enqueued in {job_queue.name} with status {job.get_status()}")
     
