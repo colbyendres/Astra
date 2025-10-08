@@ -30,10 +30,3 @@ def write_to_bucket(new_index):
     write_index(new_index, Config.LOCAL_FAISS_PATH)
     client.upload_file(Config.LOCAL_FAISS_PATH, Config.BUCKETEER_BUCKET_NAME, Config.S3_FAISS_PATH)
     print('FAISS file uploaded to S3 bucket')
-
-    
-def s3_failure(job, connection, type, value, traceback):
-    """
-    Callback for if S3 pull fails
-    """
-    raise RuntimeError('Failed to pull FAISS index in from S3')

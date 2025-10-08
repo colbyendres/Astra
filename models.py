@@ -12,9 +12,9 @@ class Paper(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.Text, nullable=False)
-    authors = db.Column(db.Text)
+    authors = db.Column(db.Text, nullable=False)
     url = db.Column(db.Text, nullable=False)
-    arxiv_id = db.Column(db.Text, nullable=False)
+    arxiv_id = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f"<Paper {self.arxiv_id}: {self.title[:40]}>"

@@ -37,12 +37,11 @@ def publish():
             if arxiv_id:
                 flask.current_app.recommender.add_by_id(arxiv_id)
             else:
-                title = flask.request.form['title']
-                abstract = flask.request.form['abstract']
-                if not title:
-                    flask.flash('Paper title is required', 'error')
-                else:
-                    flask.current_app.recommender.add_by_title(title, abstract)
+                REQUIRED_FIELDS = ['title', 'abstract', 'authors', 'url']
+                for field in REQUIRED_FIELDS:
+                    if not flask.request.form[field]:
+                        flask.flash(f'Missing required field {field}', 'error')
+                flask.current_app.recommender.add_by_title(**flask.request.form)
             flask.flash('Paper successfully added')
         except (ValueError, TypeError) as e:
             flask.flash(e, 'error')

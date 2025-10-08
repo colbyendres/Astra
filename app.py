@@ -1,21 +1,15 @@
-import os
+import threading 
 
 from flask import Flask
 from RecommendationEngine import RecommendationEngine, PaperIndex, Papers
 from config import Config
 from models import db
 from routes import bp as routes_bp
-from job_queue import job_queue
-from background_tasks import cache_faiss_index, s3_failure
-
-def hello():
-    print('Hello world')
+from background_tasks import cache_faiss_index
     
 def start_app():
-    # Pull in FAISS index from S3, if we're on the web dyno
-    job = job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
-    print(f"[enqueue] Job ID: {job.id}")
-    print(f"[enqueue] Job enqueued in {job_queue.name} with status {job.get_status()}")
+    # Pull in FAISS index from S3 as a background job
+    threading.Thread(target=cache_faiss_index, daemon=True).start()
     
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = Config.DB_URI
@@ -23,8 +17,7 @@ def start_app():
     app.secret_key = Config.SESSION_KEY
     db.init_app(app)
     
-    job_id = job.id if job else -1
-    index = PaperIndex(Config.LOCAL_FAISS_PATH, job_id)
+    index = PaperIndex(Config.LOCAL_FAISS_PATH)
     papers = Papers(db.session)
     rec = RecommendationEngine(index, papers)
     with app.app_context():

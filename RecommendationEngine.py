@@ -1,4 +1,5 @@
 import os
+import threading 
 
 from faiss import read_index
 from models import Paper
@@ -6,19 +7,15 @@ from sqlalchemy.exc import IntegrityError
 
 from EmbeddingService import EmbeddingService
 from ArxivService import ArxivService
-from job_queue import job_queue
 from background_tasks import write_to_bucket
 
 class PaperIndex:
-    def __init__(self, local_faiss_path: str, job_id):
+    def __init__(self, local_faiss_path: str):
         self.local_path = local_faiss_path
         self.index = None
         self.initialized = False
-        self.job_id = job_id 
         
     def _init_index(self):
-        job = job_queue.fetch_job(self.job_id)
-        print(f'Job status in index init: {job.get_status()}')
         if not os.path.exists(self.local_path):
             raise FileNotFoundError('Missing local file')
         self.index = read_index(self.local_path)
@@ -31,7 +28,7 @@ class PaperIndex:
     def add_embedding(self, new_emb):
         self.ensure_initialized()
         self.index.add(new_emb)
-        # job_queue.enqueue(write_to_bucket, self.index)
+        threading.Thread(target=write_to_bucket, args=(self.index), daemon=True)
 
     def search(self, query_vec, k):
         self.ensure_initialized()
@@ -115,11 +112,9 @@ class RecommendationEngine:
         emb = EmbeddingService.embed_query(query=doc, is_document=True)
         self.paper_index.add_embedding(emb)
 
-    def add_by_title(self, title: str, abstract: str):
-        paper_data = ArxivService.get_paper_by_title(title)
+    def add_by_title(self, title: str, abstract: str, authors: str, url: str, arxiv_id):
         db_id = 1 + self.papers.get_total_papers(0)
-        self.papers.add_paper(db_id=db_id, arxiv_id=paper_data['arxiv_id'], title=paper_data['title'],
-                              authors=paper_data['authors'], url=paper_data['url'])
-        doc = paper_data['title'] + ' ' + paper_data['abstract']
+        self.papers.add_paper(db_id, arxiv_id, title, authors, url)
+        doc = title + ' ' + abstract
         emb = EmbeddingService.embed_query(query=doc, is_document=True)
         self.paper_index.add_embedding(emb)
