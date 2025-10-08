@@ -10,12 +10,15 @@ from job_queue import job_queue
 from background_tasks import write_to_bucket
 
 class PaperIndex:
-    def __init__(self, local_faiss_path: str):
+    def __init__(self, local_faiss_path: str, job_id):
         self.local_path = local_faiss_path
         self.index = None
         self.initialized = False
-
+        self.job_id = job_id 
+        
     def _init_index(self):
+        job = job_queue.fetch_job(self.job_id)
+        print(f'Job status in index init: {job.get_status()}')
         if not os.path.exists(self.local_path):
             raise FileNotFoundError('Missing local file')
         self.index = read_index(self.local_path)
