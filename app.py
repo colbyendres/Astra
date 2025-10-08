@@ -12,6 +12,7 @@ def hello():
     print('Hello world')
     
 def start_app():
+    print(f'ENV: DYNO = {os.getenv('DYNO')}')
     # Pull in FAISS index from S3, if we're on the web dyno
     if os.getenv('DYNO', '').startswith('web'):
         job = job_queue.enqueue(cache_faiss_index, on_failure=s3_failure)
