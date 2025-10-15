@@ -28,7 +28,7 @@ class PaperIndex:
     def add_embedding(self, new_emb):
         self.ensure_initialized()
         self.index.add(new_emb)
-        threading.Thread(target=write_to_bucket, args=(self.index), daemon=True)
+        threading.Thread(target=write_to_bucket, args=(self.index, ), daemon=True).start()
 
     def search(self, query_vec, k):
         self.ensure_initialized()
@@ -46,6 +46,7 @@ class Papers:
         try:
             self.db.add(paper)
             self.db.commit()
+            
         except IntegrityError as e:
             self.db.rollback()
             raise ValueError('Title already present in database')
