@@ -23,11 +23,16 @@ class Paper(db.Model):
         """
         Return paper as a dictionary
         """
-        author_list = literal_eval(self.authors)
-        if len(author_list) > 2:
-            authors = ', '.join(author_list[:2]).title() + ' et al.'
-        else:
-            authors = ', '.join(author_list).title()
+        try:
+            # We expect the authors to be a list of strings
+            author_list = literal_eval(self.authors)
+            if len(author_list) > 2:
+                authors = ', '.join(author_list[:2]).title() + ' et al.'
+            else:
+                authors = ', '.join(author_list).title()
+        except ValueError:
+            # literal_eval fails to parse, just use self.authors as fallback
+            authors = self.authors
         return {
             'arxiv_id': self.arxiv_id,
             'title': titlecase(self.title),

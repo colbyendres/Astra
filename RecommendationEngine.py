@@ -46,7 +46,6 @@ class Papers:
         try:
             self.db.add(paper)
             self.db.commit()
-            
         except IntegrityError as e:
             self.db.rollback()
             raise ValueError('Title already present in database')
@@ -106,7 +105,7 @@ class RecommendationEngine:
 
     def add_by_id(self, arxiv_id: str):
         paper_data = ArxivService.get_paper_by_id(arxiv_id=arxiv_id)
-        db_id = 1 + self.papers.get_total_papers(0)
+        db_id = self.papers.get_total_papers(0)
         self.papers.add_paper(db_id=db_id, arxiv_id=paper_data['arxiv_id'], title=paper_data['title'],
                               authors=paper_data['authors'], url=paper_data['url'])
         doc = paper_data['title'] + ' ' + paper_data['abstract']
@@ -114,8 +113,10 @@ class RecommendationEngine:
         self.paper_index.add_embedding(emb)
 
     def add_by_title(self, title: str, abstract: str, authors: str, url: str, arxiv_id):
-        db_id = 1 + self.papers.get_total_papers(0)
-        self.papers.add_paper(db_id, arxiv_id, title, authors, url)
+        db_id = self.papers.get_total_papers(0)
+        author_list = str([author.strip() for author in authors.split(sep=',')])
+        print(f'author list: {author_list}')
+        self.papers.add_paper(db_id, arxiv_id, title, author_list, url)
         doc = title + ' ' + abstract
         emb = EmbeddingService.embed_query(query=doc, is_document=True)
         self.paper_index.add_embedding(emb)
