@@ -1,8 +1,10 @@
 import os 
+import logging
 from dotenv import load_dotenv
 
 class Config:
     load_dotenv()
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
     SECRET_KEY = os.environ.get('SECRET_KEY')
     DB_URI = os.environ.get('DATABASE_URL').replace('postgres://', 'postgresql://')
     EMBEDDINGS_INDEX = os.environ.get('EMBEDDINGS_INDEX')
@@ -18,4 +20,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False 
     LOCAL_FAISS_PATH = '/tmp/paper_index.faiss'
     S3_FAISS_PATH = 'data/paper_index.faiss'
+
     

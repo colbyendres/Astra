@@ -1,3 +1,5 @@
+import logging
+
 from flask_sqlalchemy import SQLAlchemy
 from titlecase import titlecase
 from ast import literal_eval
@@ -31,6 +33,7 @@ class Paper(db.Model):
             else:
                 authors = ', '.join(author_list).title()
         except ValueError:
+            logging.debug(f'Failed to parse author list {author_list}, just using plain text')
             # literal_eval fails to parse, just use self.authors as fallback
             authors = self.authors
         return {

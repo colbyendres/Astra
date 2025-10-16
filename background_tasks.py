@@ -1,4 +1,6 @@
 import os
+import logging 
+
 from faiss import write_index
 from boto3 import Session
 from config import Config
@@ -14,8 +16,11 @@ def cache_faiss_index():
             region_name=Config.BUCKETEER_AWS_REGION
         )
         client = session.client('s3')
-        client.download_file(Config.BUCKETEER_BUCKET_NAME, Config.S3_FAISS_PATH, Config.LOCAL_FAISS_PATH)
-        print('FAISS file downloaded from S3 bucket')
+        try:
+            client.download_file(Config.BUCKETEER_BUCKET_NAME, Config.S3_FAISS_PATH, Config.LOCAL_FAISS_PATH)
+            logging.info('FAISS file downloaded from S3 bucket')
+        except Exception as e:
+            logging.error(f'Failed to download file from {Config.S3_FAISS_PATH} in S3 bucket')
 
 def write_to_bucket(new_index):
     """
@@ -28,5 +33,8 @@ def write_to_bucket(new_index):
     )
     client = session.client('s3')
     write_index(new_index, Config.LOCAL_FAISS_PATH)
-    client.upload_file(Config.LOCAL_FAISS_PATH, Config.BUCKETEER_BUCKET_NAME, Config.S3_FAISS_PATH)
-    print('FAISS file uploaded to S3 bucket')
+    try:
+        client.upload_file(Config.LOCAL_FAISS_PATH, Config.BUCKETEER_BUCKET_NAME, Config.S3_FAISS_PATH)
+        logging.info('FAISS file uploaded to S3 bucket')
+    except Exception as e:
+        logging.warning(f'Failed to upload index to S3 bucket')

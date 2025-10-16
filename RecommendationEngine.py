@@ -1,5 +1,6 @@
 import os
 import threading 
+import logging
 
 from faiss import read_index
 from models import Paper
@@ -22,6 +23,7 @@ class PaperIndex:
     def _init_index(self):
         if not os.path.exists(self.local_path):
             raise FileNotFoundError('Missing local file')
+        logging.debug('Reading FAISS index from local file')
         self.index = read_index(self.local_path)
         self.initialized = True
 
@@ -43,6 +45,7 @@ class PaperIndex:
             None
         """
         self.ensure_initialized()
+        logging.debug('Adding paper to FAISS index')
         self.index.add(new_emb)
         threading.Thread(target=write_to_bucket, args=(self.index, ), daemon=True).start()
 
@@ -90,10 +93,13 @@ class Papers:
         try:
             self.db.add(paper)
             self.db.commit()
+            logging.info(f'Paper with title {title} successfully added')
         except IntegrityError as e:
+            logging.error(f'IntegrityError: {e.msg}, rolling back transaction')
             self.db.rollback()
             raise ValueError('Title already present in database')
         except Exception as e:
+            logging.error(f'Exception {e.msg} raised, rolling back transaction')
             self.db.rollback()
             raise e
 
@@ -149,7 +155,8 @@ class RecommendationEngine:
 
         emb = EmbeddingService.embed_query(query)
         scores, indices = self.paper_index.search(emb, k)
-
+        logging.info(f'Found {k} papers with ids: {indices}')
+        
         papers = self.papers.get_papers_by_ids(indices)
         results = []
         for idx, paper in enumerate(papers):
