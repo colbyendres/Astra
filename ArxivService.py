@@ -16,7 +16,7 @@ class ArxivService:
             arxiv_id: Presumed arxiv_id
             
         Returns:
-            bool
+            is_arxiv_id (bool)
         """
         return bool(ArxivService.IS_ARXIV_ID.search(arxiv_id))
     

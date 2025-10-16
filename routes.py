@@ -41,12 +41,12 @@ def publish():
                 for field in REQUIRED_FIELDS:
                     if not flask.request.form[field]:
                         flask.flash(f'Missing required field {field}', 'error')
+                        flask.render_template('publish.html')
                 flask.current_app.recommender.add_by_title(**flask.request.form)
             flask.flash('Paper successfully added')
         except (ValueError, TypeError) as e:
             flask.flash(e, 'error')
         except FileNotFoundError:
             flask.flash('Building paper index, try again after a couple seconds', 'warning')
-            return flask.render_template("publish.html")
     return flask.render_template('publish.html') 
                 

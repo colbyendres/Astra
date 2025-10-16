@@ -9,5 +9,4 @@ arxiv
 gunicorn
 dotenv
 boto3
-rq
 pylatexenc
