@@ -95,11 +95,11 @@ class Papers:
             self.db.commit()
             logging.info(f'Paper with title {title} successfully added')
         except IntegrityError as e:
-            logging.error(f'IntegrityError: {e.msg}, rolling back transaction')
+            logging.error(f'IntegrityError: {e}, rolling back transaction')
             self.db.rollback()
             raise ValueError('Title already present in database')
         except Exception as e:
-            logging.error(f'Exception {e.msg} raised, rolling back transaction')
+            logging.error(f'Exception {e} raised, rolling back transaction')
             self.db.rollback()
             raise e
 
