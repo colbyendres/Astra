@@ -11,12 +11,12 @@ class Config:
         logging.debug('Using remote Postgres database')
         DB_URI = DB_URI.replace('postgres://', 'postgresql://')
     elif DB_URI and 'sqlite:///' in DB_URI:
-        # Assume that the local db is in the root directory (same as this file)
+        # Assume that the local db is at ROOT_DIR/data/db_name.db
         # Dynamically generate absolute path, since we can't hardcode that for Heroku
         db_name = DB_URI.strip('sqlite:///')
-        full_path = os.path.join(os.getcwd(), db_name)
+        full_path = os.path.join(os.getcwd(), 'data', db_name)
         DB_URI = f'sqlite:///{full_path}'
-        logging.debug(f'Using local SQLite database at abs path: {full_path}')
+        logging.debug('Using local SQLite database at abs path: %s', full_path)
         
     EMBEDDINGS_INDEX = os.environ.get('EMBEDDINGS_INDEX')
     EMBEDDING_MODEL_ID = os.environ.get('EMBEDDING_MODEL_ID')
