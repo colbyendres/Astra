@@ -93,13 +93,13 @@ class Papers:
         try:
             self.db.add(paper)
             self.db.commit()
-            logging.info(f'Paper with title {title} successfully added')
+            logging.info('Paper with title %s successfully added', title)
         except IntegrityError as e:
-            logging.error(f'IntegrityError: {e.msg}, rolling back transaction')
+            logging.error('Error adding to database: %s', e)
             self.db.rollback()
-            raise ValueError('Title already present in database')
+            raise ValueError('Title already present in database') from e
         except Exception as e:
-            logging.error(f'Exception {e.msg} raised, rolling back transaction')
+            logging.error('Error adding to database: %s', e)
             self.db.rollback()
             raise e
 
@@ -155,7 +155,7 @@ class RecommendationEngine:
 
         emb = EmbeddingService.embed_query(query)
         scores, indices = self.paper_index.search(emb, k)
-        logging.info(f'Found {k} papers with ids: {indices}')
+        logging.info('Found %d papers with ids: %s', len(indices), indices)
         
         papers = self.papers.get_papers_by_ids(indices)
         results = []
