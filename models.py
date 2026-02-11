@@ -33,8 +33,8 @@ class Paper(db.Model):
             else:
                 authors = ', '.join(author_list).title()
         except ValueError:
-            logging.debug(f'Failed to parse author list {author_list}, just using plain text')
             # literal_eval fails to parse, just use self.authors as fallback
+            logging.debug('Failed to parse author list %s, just using plain text', self.authors)
             authors = self.authors
         return {
             'arxiv_id': self.arxiv_id,

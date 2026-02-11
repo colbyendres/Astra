@@ -36,9 +36,9 @@ class ArxivService:
         try:
             arxiv_res = Search(id_list=[arxiv_id], max_results=1)
             data = next(arxiv_res.results())
-        except StopIteration:
+        except StopIteration as e:
             # Generator is already at end, so search came up empty-handed
-            raise ValueError(f'Paper with arXiv ID {arxiv_id} does not exist')
+            raise ValueError(f'Paper with arXiv ID {arxiv_id} does not exist') from e
         
         authors = [str(a) for a in data.authors]
         return {
