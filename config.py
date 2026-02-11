@@ -6,7 +6,18 @@ class Config:
     load_dotenv()
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    DB_URI = os.environ.get('DATABASE_URL').replace('postgres://', 'postgresql://')
+    DB_URI = os.environ.get('DATABASE_URL')
+    if DB_URI and 'postgres://' in DB_URI:
+        logging.debug('Using remote Postgres database')
+        DB_URI = DB_URI.replace('postgres://', 'postgresql://')
+    elif DB_URI and 'sqlite:///' in DB_URI:
+        # Assume that the local db is in the root directory (same as this file)
+        # Dynamically generate absolute path, since we can't hardcode that for Heroku
+        db_name = DB_URI.strip('sqlite:///')
+        full_path = os.path.join(os.getcwd(), db_name)
+        DB_URI = f'sqlite:///{full_path}'
+        logging.debug(f'Using local SQLite database at abs path: {full_path}')
+        
     EMBEDDINGS_INDEX = os.environ.get('EMBEDDINGS_INDEX')
     EMBEDDING_MODEL_ID = os.environ.get('EMBEDDING_MODEL_ID')
     EMBEDDING_URL = os.environ.get('EMBEDDING_URL')
@@ -16,7 +27,6 @@ class Config:
     BUCKETEER_AWS_REGION = os.environ.get('BUCKETEER_AWS_REGION')
     BUCKETEER_BUCKET_NAME = os.environ.get('BUCKETEER_BUCKET_NAME')
     BUCKETEER_AWS_SECRET_ACCESS_KEY = os.environ.get('BUCKETEER_AWS_SECRET_ACCESS_KEY')
-    REDIS_URL = os.environ.get('REDIS_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False 
     LOCAL_FAISS_PATH = '/tmp/paper_index.faiss'
     S3_FAISS_PATH = 'data/paper_index.faiss'
